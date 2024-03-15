@@ -14,6 +14,11 @@ functions:
     events:
       - eventBridge:
           schedule: rate(1 minute)
+      - eventBridge:
+          eventBus: default
+          pattern:
+            source:
+              - custom.event          
 
 plugins:
   - serverless-localstack
