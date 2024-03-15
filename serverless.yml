@@ -3,18 +3,17 @@ service: localstack-demo
 provider:
   name: aws
   runtime: python3.8
-  stage: dev
-  region: ap-northeast-1
+  stage: ${opt:stage, 'dev'}
+  region: ${file(./config.${self:provider.stage}.yml):region, 'us-east-1'}
   environment:
-    LOCALSTACK_HOSTNAME: localhost
+    LOCALSTACK_HOSTNAME: ${file(./config.${self:provider.stage}.yml):localstack_hostname, 'localhost'}
 
 functions:
   hello:
     handler: handler.hello
     events:
-      - http:
-          path: /hello
-          method: get
+      - eventBridge:
+          schedule: rate(1 minute)
 
 plugins:
   - serverless-localstack
@@ -22,7 +21,7 @@ plugins:
 custom:
   localstack:
     stages:
-      - dev
+      - local
     host: http://localhost
     edgePort: 4566
     autostart: true
