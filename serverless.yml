@@ -1,16 +1,16 @@
-service: localstack-demo
+service: aws-budget-notifier
 
 provider:
   name: aws
-  runtime: python3.8
+  runtime: python3.9
   stage: ${opt:stage, 'dev'}
-  region: ${file(./config.${self:provider.stage}.yml):region, 'us-east-1'}
+  region: ${file(./config.${self:provider.stage}.yml):region, 'ap-northeast-1'}
   environment:
     LOCALSTACK_HOSTNAME: ${file(./config.${self:provider.stage}.yml):localstack_hostname, 'localhost'}
 
 functions:
-  hello:
-    handler: handler.hello
+  notify_cost:
+    handler: handler.main
     events:
       - eventBridge:
           schedule: rate(1 minute)
