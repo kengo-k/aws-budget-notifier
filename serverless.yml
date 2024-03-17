@@ -1,19 +1,43 @@
-service: aws-budget-notifier
+service: budget-notifier
 
 provider:
   name: aws
   runtime: python3.9
-  stage: ${opt:stage, 'dev'}
+  stage: ${opt:stage, 'prd'}
   region: ${file(./config.${self:provider.stage}.yml):region, 'ap-northeast-1'}
   environment:
     LOCALSTACK_HOSTNAME: ${file(./config.${self:provider.stage}.yml):localstack_hostname, 'localhost'}
 
+package:
+  individually: true
+  exclude:
+    - '**/*'
+  include:
+    - handler.py
+    - requirements.txt
+
 functions:
   notify_cost:
     handler: handler.main
+    iamRoleStatementsName: budget-notifier-role
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - s3:GetObject
+          - s3:PutObject
+        Resource: arn:aws:s3:::your-bucket-name/*
+      - Effect: Allow
+        Action:
+          - ce:GetCostAndUsage
+        Resource: "*"
+      - Effect: Allow
+        Action:
+          - ssm:GetParameter
+          - ssm:GetParameters
+        Resource: "arn:aws:ssm:${self:provider.region}:*:parameter/*"
     events:
-      - eventBridge:
-          schedule: rate(1 minute)
+      # - eventBridge:
+      #     schedule: rate(1 minute)
       - eventBridge:
           eventBus: default
           pattern:
@@ -22,6 +46,7 @@ functions:
 
 plugins:
   - serverless-localstack
+  - serverless-iam-roles-per-function  
 
 custom:
   localstack:
