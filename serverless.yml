@@ -11,10 +11,7 @@ provider:
 package:
   individually: true
   exclude:
-    - '**/*'
-  include:
-    - handler.py
-    - requirements.txt
+    - 'node_modules/**'
 
 functions:
   notify_cost:
