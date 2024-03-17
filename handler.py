@@ -1,7 +1,18 @@
 import json
+import boto3
 
 
 def main(event, context):
+
+    print('main start')
+
+    s3 = boto3.client('s3')
+    buckets = s3.list_buckets()
+
+    # バケット名を表示
+    for bucket in buckets['Buckets']:
+        print(bucket['Name'])
+
     body = {
         "message": "Go Serverless v1.0! Your function executed successfully!",
         "input": event
@@ -22,3 +33,8 @@ def main(event, context):
         "event": event
     }
     """
+
+if __name__ == '__main__':
+    event = {}
+    context = None
+    main(event, context)
