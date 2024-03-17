@@ -1,5 +1,21 @@
+import os
 import json
+import requests
+
 import boto3
+
+def get_parameter(key, default_value=None):
+    if os.environ.get('ENVIRONMENT') == 'local':
+        value = os.environ.get(key, default_value)
+    else:
+        ssm_client = boto3.client('ssm')
+        try:
+            response = ssm_client.get_parameter(Name=key, WithDecryption=True)
+            value = response['Parameter']['Value']
+        except ssm_client.exceptions.ParameterNotFound:
+            value = default_value
+    
+    return value
 
 def get_monthly_cost(year, month):
     ce = boto3.client('ce')
@@ -12,6 +28,15 @@ def get_monthly_cost(year, month):
         Metrics=['UnblendedCost']
     )
     return monthly_cost
+
+
+
+def notify_slack(message):
+    webhook_url = get=get_parameter('BUDGET_NOTIFIER_SLACK_WEBHOOK_URL')
+    data = {'text': message}
+    response = requests.post(webhook_url, json=data)
+    
+    return response
 
 def main(event, context):
 
