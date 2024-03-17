@@ -1,17 +1,21 @@
 import json
 import boto3
 
+def get_monthly_cost(year, month):
+    ce = boto3.client('ce')
+    monthly_cost = ce.get_cost_and_usage(
+        TimePeriod={
+            'Start': f'{year}-{month:02d}-01',
+            'End': f'{year}-{month+1:02d}-01' if month < 12 else f'{year+1}-01-01'
+        },
+        Granularity='MONTHLY',
+        Metrics=['UnblendedCost']
+    )
+    return monthly_cost
 
 def main(event, context):
 
     print('main start')
-
-    s3 = boto3.client('s3')
-    buckets = s3.list_buckets()
-
-    # バケット名を表示
-    for bucket in buckets['Buckets']:
-        print(bucket['Name'])
 
     body = {
         "message": "Go Serverless v1.0! Your function executed successfully!",
@@ -35,6 +39,4 @@ def main(event, context):
     """
 
 if __name__ == '__main__':
-    event = {}
-    context = None
-    main(event, context)
+    print(get_monthly_cost(2024, 3))
