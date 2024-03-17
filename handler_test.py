@@ -1,5 +1,3 @@
-import pytest
-
 import dpath
 
 from handler import get_monthly_cost
