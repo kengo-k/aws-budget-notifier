@@ -1,7 +1,8 @@
 import os
+import datetime
 import json
 import requests
-
+import dpath
 import boto3
 
 def get_parameter(key, default_value=None):
@@ -29,8 +30,6 @@ def get_monthly_cost(year, month):
     )
     return monthly_cost
 
-
-
 def notify_slack(message):
     webhook_url = get=get_parameter('BUDGET_NOTIFIER_SLACK_WEBHOOK_URL')
     data = {'text': message}
@@ -40,7 +39,18 @@ def notify_slack(message):
 
 def main(event, context):
 
-    print('main start')
+    now = datetime.datetime.now()
+    year = now.year
+    month = now.month
+
+    monthly_cost = get_monthly_cost(year, month)
+    results = dpath.get(monthly_cost, 'ResultsByTime')
+    result = results[0]
+    value = dpath.get(result, 'Total/UnblendedCost/Amount')
+    value = round(float(value), 2)
+    value = f"Cumulative billing amount for {year}/{month}: ${value}"
+
+    notify_slack(value)
 
     body = {
         "message": "Go Serverless v1.0! Your function executed successfully!",
@@ -64,4 +74,6 @@ def main(event, context):
     """
 
 if __name__ == '__main__':
-    print(get_monthly_cost(2024, 3))
+    event = {}
+    context = None
+    main(event, context)
