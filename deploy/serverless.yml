@@ -1,0 +1,55 @@
+service: budget-notifier
+
+frameworkVersion: '3'
+useDotenv: true
+
+custom:
+  dotenv:
+    path: .env
+
+provider:
+  name: aws
+  runtime: python3.9
+  stage: ${opt:stage}
+  region: ${env:REGION}
+  environment:
+    PYTHONPATH: ${env:PYTHONPATH}
+    FOO: FOO
+    BAR: 'FOO:BAR'
+    BAZ: FOO:BAR:BAZ
+
+package:
+  individually: true
+  exclude:
+    - 'node_modules/**'
+
+functions:
+  notify_cost:
+    handler: src/handler.main
+    iamRoleStatementsName: budget-notifier-role-${self:provider.stage}
+    iamRoleStatements:
+      - Effect: Allow
+        Action:
+          - s3:GetObject
+          - s3:PutObject
+        Resource: arn:aws:s3:::your-bucket-name/*
+      - Effect: Allow
+        Action:
+          - ce:GetCostAndUsage
+        Resource: "*"
+      - Effect: Allow
+        Action:
+          - ssm:GetParameter
+          - ssm:GetParameters
+        Resource: "arn:aws:ssm:${env:REGION}:*:parameter/*"
+    events:
+      - eventBridge:
+          schedule: cron(0 6 * * ? *)
+      - eventBridge:
+          eventBus: default
+          pattern:
+            source:
+              - custom.event          
+
+plugins:
+  - serverless-iam-roles-per-function
