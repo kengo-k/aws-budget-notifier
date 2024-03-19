@@ -4,8 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "deploy:stg": "./deploy.sh stg"
+    "test": "pytest",
+    "deploy:stg": "./deploy.sh stg",
+    "deploy:prd": "./deploy.sh prd"
   },
   "author": "",
   "license": "ISC",
