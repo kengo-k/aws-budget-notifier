@@ -2,7 +2,6 @@ import os
 import datetime
 import json
 import requests
-import dpath
 import boto3
 
 def get_parameter(key, default_value=None):
@@ -27,23 +26,46 @@ def get_monthly_cost(year, month):
         },
         Granularity='MONTHLY',
         Metrics=['UnblendedCost'],
-        GroupBy=[{'Type': 'DIMENSION', 'Key': 'SERVICE'}]
+        GroupBy=[
+            {'Type': 'DIMENSION', 'Key': 'SERVICE'},
+            {'Type': 'DIMENSION', 'Key': 'RECORD_TYPE'}
+        ]
     )
 
     result = []
     total_cost = 0
 
     for item in monthly_cost['ResultsByTime'][0]['Groups']:
-        service_name = item['Keys'][0]
+        record_type = item['Keys'][1]
+        if record_type == 'Tax':
+            service_name = 'Tax'
+        else:
+            service_name = item['Keys'][0]
+        
         cost = float(item['Metrics']['UnblendedCost']['Amount'])
         result.append((service_name, cost))
         total_cost += cost
 
-    result.sort(key=lambda x: x[1], reverse=True)
-    result_with_percentage = [(service_name, cost, cost / total_cost * 100) for service_name, cost in result]
-    result_with_percentage.append(('Total', total_cost, 100))
-
+    services = sorted([item for item in result if item[0] not in ['Tax', 'Total']], key=lambda x: x[1], reverse=True)
+    
+    tax_item = next((item for item in result if item[0] == 'Tax'), None)
+    total_item = ('Total', total_cost)
+    
+    sorted_result = services + ([tax_item] if tax_item else []) + [total_item]
+    
+    result_with_percentage = [(service_name, cost, cost / total_cost * 100) for service_name, cost in sorted_result]
     return result_with_percentage
+
+def get_report_string(cost_data):
+    report = []
+    for item in cost_data:
+        service_name, cost, percentage = item
+        formatted_cost = f'${cost:.2f}'
+        formatted_percentage = f'({percentage:.1f}%)'
+        report_line = f'{service_name}: {formatted_cost} {formatted_percentage}'
+        report.append(report_line)
+    
+    return '\n'.join(report)
 
 def notify_slack(message):
     webhook_url = get=get_parameter('BUDGET_NOTIFIER_SLACK_WEBHOOK_URL')
@@ -59,17 +81,13 @@ def main(event, context):
     month = now.month
 
     monthly_cost = get_monthly_cost(year, month)
-    results = dpath.get(monthly_cost, 'ResultsByTime')
-    result = results[0]
-    value = dpath.get(result, 'Total/UnblendedCost/Amount')
-    value = round(float(value), 2)
-    value = f"Cumulative billing amount for {year}/{month}: ${value}"
+    report_string = get_report_string(monthly_cost)
 
-    notify_slack(value)
+    notify_slack(report_string)
 
     body = {
-        "message": "Go Serverless v1.0! Your function executed successfully!",
-        "input": event
+        "message": "success",
+        "data": monthly_cost
     }
 
     response = {
@@ -79,16 +97,8 @@ def main(event, context):
 
     return response
 
-    # Use this code if you don't use the http event with the LAMBDA-PROXY
-    # integration
-    """
-    return {
-        "message": "Go Serverless v1.0! Your function executed successfully!",
-        "event": event
-    }
-    """
-
 if __name__ == '__main__':
     event = {}
     context = None
-    main(event, context)
+    cost = get_monthly_cost(2024, 3)
+    print(get_report_string(cost))

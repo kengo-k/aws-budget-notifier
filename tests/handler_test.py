@@ -1,6 +1,5 @@
-import dpath
-
 from handler import get_monthly_cost
+from handler import get_report_string
 
 def test_get_monthly_cost():
     monthly_cost = get_monthly_cost(2024, 3)
@@ -18,3 +17,18 @@ def test_get_monthly_cost():
     assert isinstance(first, str)
     assert isinstance(second, float)
     assert isinstance(third, float)
+
+def test_get_report_string():
+    monthly_cost = get_monthly_cost(2024, 3)
+    report_string = get_report_string(monthly_cost)
+
+    assert isinstance(report_string, str)
+    lines = report_string.split("\n")
+    assert len(lines) > 3
+
+    last = lines[-1]
+    assert last.startswith("Total:")
+
+    last1 = lines[-2]
+    assert last1.startswith("Tax:")
+    
