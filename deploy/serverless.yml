@@ -3,10 +3,6 @@ service: budget-notifier
 frameworkVersion: '3'
 useDotenv: true
 
-custom:
-  dotenv:
-    path: .env
-
 provider:
   name: aws
   runtime: python3.9
@@ -14,9 +10,6 @@ provider:
   region: ${env:REGION}
   environment:
     PYTHONPATH: ${env:PYTHONPATH}
-    FOO: FOO
-    BAR: 'FOO:BAR'
-    BAZ: FOO:BAR:BAZ
 
 package:
   individually: true
@@ -30,11 +23,6 @@ functions:
     iamRoleStatements:
       - Effect: Allow
         Action:
-          - s3:GetObject
-          - s3:PutObject
-        Resource: arn:aws:s3:::your-bucket-name/*
-      - Effect: Allow
-        Action:
           - ce:GetCostAndUsage
         Resource: "*"
       - Effect: Allow
@@ -44,7 +32,7 @@ functions:
         Resource: "arn:aws:ssm:${env:REGION}:*:parameter/*"
     events:
       - eventBridge:
-          schedule: cron(0 6 * * ? *)
+          schedule: cron(0 21 * * ? *)
       - eventBridge:
           eventBus: default
           pattern:
