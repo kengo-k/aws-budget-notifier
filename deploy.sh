@@ -13,12 +13,7 @@ cp package.json package-lock.json .build
 cp -r src .build
 cp .env.${stage} .build/.env
 cp requirements.txt .build/lib
-
-if [ "$stage" = "local" ]; then
-  cp deploy/serverless.local.yml .build/serverless.yml
-else
-  cp deploy/serverless.yml .build
-fi
+cp deploy/serverless.${stage}.yml .build/serverless.yml
 
 cd .build/lib
 npm ci
