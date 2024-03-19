@@ -4,18 +4,17 @@ import json
 import requests
 import boto3
 
-def get_parameter(key, default_value=None):
-    if os.environ.get('ENVIRONMENT') == 'local':
-        value = os.environ.get(key, default_value)
-    else:
-        ssm_client = boto3.client('ssm')
-        try:
-            response = ssm_client.get_parameter(Name=key, WithDecryption=True)
-            value = response['Parameter']['Value']
-        except ssm_client.exceptions.ParameterNotFound:
-            value = default_value
+def get_webhook_url():
+    key = 'BUDGET_NOTIFIER_SLACK_WEBHOOK_URL'
+    webhook_url = os.environ.get(key)
+    if webhook_url is not None:
+        return webhook_url
     
-    return value
+    ssm_client = boto3.client('ssm')
+    response = ssm_client.get_parameter(Name=key, WithDecryption=True)
+    webhook_url = response['Parameter']['Value']
+    
+    return webhook_url
 
 def get_monthly_cost(year, month):
     ce = boto3.client('ce')
@@ -68,7 +67,7 @@ def get_report_string(cost_data):
     return '\n'.join(report)
 
 def notify_slack(message):
-    webhook_url = get=get_parameter('BUDGET_NOTIFIER_SLACK_WEBHOOK_URL')
+    webhook_url = get_webhook_url()
     data = {'text': message}
     response = requests.post(webhook_url, json=data)
     
@@ -100,5 +99,4 @@ def main(event, context):
 if __name__ == '__main__':
     event = {}
     context = None
-    cost = get_monthly_cost(2024, 3)
-    print(get_report_string(cost))
+    main(event, context)
