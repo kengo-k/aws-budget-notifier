@@ -4,11 +4,17 @@ from handler import get_monthly_cost
 
 def test_get_monthly_cost():
     monthly_cost = get_monthly_cost(2024, 3)
-    assert isinstance(monthly_cost, dict)
+    assert isinstance(monthly_cost, list)
+    assert len(monthly_cost) > 0
 
-    results = dpath.get(monthly_cost, 'ResultsByTime')
-    assert isinstance(results, list)
-    assert len(results) == 1
+    head = monthly_cost[0]
+    assert isinstance(head, tuple)
+    assert len(head) == 3
 
-    total = dpath.get(results[0], 'Total/UnblendedCost/Amount')
-    assert total is not None
+    first = head[0]
+    second = head[1]
+    third = head[2]
+
+    assert isinstance(first, str)
+    assert isinstance(second, float)
+    assert isinstance(third, float)

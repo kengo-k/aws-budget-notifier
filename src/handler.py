@@ -26,9 +26,24 @@ def get_monthly_cost(year, month):
             'End': f'{year}-{month+1:02d}-01' if month < 12 else f'{year+1}-01-01'
         },
         Granularity='MONTHLY',
-        Metrics=['UnblendedCost']
+        Metrics=['UnblendedCost'],
+        GroupBy=[{'Type': 'DIMENSION', 'Key': 'SERVICE'}]
     )
-    return monthly_cost
+
+    result = []
+    total_cost = 0
+
+    for item in monthly_cost['ResultsByTime'][0]['Groups']:
+        service_name = item['Keys'][0]
+        cost = float(item['Metrics']['UnblendedCost']['Amount'])
+        result.append((service_name, cost))
+        total_cost += cost
+
+    result.sort(key=lambda x: x[1], reverse=True)
+    result_with_percentage = [(service_name, cost, cost / total_cost * 100) for service_name, cost in result]
+    result_with_percentage.append(('Total', total_cost, 100))
+
+    return result_with_percentage
 
 def notify_slack(message):
     webhook_url = get=get_parameter('BUDGET_NOTIFIER_SLACK_WEBHOOK_URL')
