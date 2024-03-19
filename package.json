@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "pytest",
+    "deploy:localstack": "./deploy.sh local",
     "deploy:stg": "./deploy.sh stg",
     "deploy:prd": "./deploy.sh prd"
   },

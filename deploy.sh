@@ -11,7 +11,13 @@ mkdir .build/lib
 
 cp package.json package-lock.json .build
 cp -r src .build
-cp .env.${stage} .build/.env
+
+if [ "$stage" = "local" ]; then
+  cp .env .build/.env
+else
+  cp .env.${stage} .build/.env
+fi
+
 cp requirements.txt .build/lib
 cp deploy/serverless.${stage}.yml .build/serverless.yml
 
