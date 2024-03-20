@@ -1,6 +1,3 @@
-from unittest.mock import patch
-
-from handler import get_monthly_cost
 from handler import get_report_string
 
 mocked_value = [
@@ -12,10 +9,9 @@ mocked_value = [
 ]
 
 
-@patch("handler.get_monthly_cost")
-def test_get_monthly_cost(mock_get_monthly_cost):
+def test_get_monthly_cost(mocker):
 
-    mock_get_monthly_cost.return_value = mocked_value
+    get_monthly_cost = mocker.patch("handler.get_monthly_cost", return_value=mocked_value)
 
     monthly_cost = get_monthly_cost(2024, 3)
     assert isinstance(monthly_cost, list)
@@ -33,11 +29,15 @@ def test_get_monthly_cost(mock_get_monthly_cost):
     assert isinstance(second, float)
     assert isinstance(third, float)
 
+    last = monthly_cost[-1]
+    assert last[0] == "Total"
+    assert last[1] == 200.0
+    assert last[2] == 100.0
 
-@patch("handler.get_monthly_cost")
-def test_get_report_string(mock_get_monthly_cost):
 
-    mock_get_monthly_cost.return_value = mocked_value
+def test_get_report_string(mocker):
+
+    get_monthly_cost = mocker.patch("handler.get_monthly_cost", return_value=mocked_value)
 
     monthly_cost = get_monthly_cost(2024, 3)
     report_string = get_report_string(monthly_cost)
