@@ -3,6 +3,9 @@ name: Run Tests
 on:
   pull_request:
 
+env:
+  PYTHON_PATH: src:lib
+
 jobs:
   test:
     runs-on: ubuntu-20.04
